@@ -13,7 +13,8 @@ import skimage.feature as skif
 from sklearn.utils import shuffle
 from sklearn import svm, preprocessing
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import confusion_matrix
+import pandas as pd
+import sklearn.metrics as skmetrics
 
 def readImageDir(myPath, myLabel):
     """
@@ -108,7 +109,8 @@ idx = 0  ## used to watch it run
 
 for image in trainEqualized:
     idx +=1 
-    print("Still running ", idx)  ## used to mark progress of run
+    if (idx % 10)==0:
+        print("Still running ", idx)  ## used to mark progress of run
     glcm = skif.greycomatrix(image, distances=distances, angles=angles,symmetric=True,normed=True)
     feats = np.hstack([skif.greycoprops(glcm, prop).ravel() for prop in properties])
     trainGLCMFeats.append(feats)
@@ -128,10 +130,10 @@ trainGLCMFeats = scaler.transform(trainGLCMFeats)
 ## SVM time! Picking the best kernels, hyperparameters
 ## Commented out since it can take a while to run 
 ## Source: https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV
-parameters = {'kernel':('linear','rbf'), 'C':[0.1, 1, 10, 100],'gamma':['scale', 0.01, 0.001, 0.0001]}
-svc = svm.SVC()
-clf = GridSearchCV(svc, parameters, cv=5, verbose=2)
-clf.fit(trainGLCMFeats, trainLabels)
+#parameters = {'kernel':('linear','rbf'), 'C':[0.1, 1, 10, 100],'gamma':['scale', 0.01, 0.001, 0.0001]}
+#svc = svm.SVC()
+#clf = GridSearchCV(svc, parameters, cv=5, verbose=2)
+#clf.fit(trainGLCMFeats, trainLabels)
 ## result was that the best was C=100, gamma='scale', kernel='rbf'
 ## had best mean score of 0.9321319018404908
 
@@ -163,7 +165,8 @@ testGLCMFeats = []
 idx = 0  ## used to watch it run
 for image in testEqualized:
     idx +=1 
-    print("Still running ", idx)  ## used to mark progress of run
+    if (idx % 10)==0:
+        print("Still running ", idx)  ## used to mark progress of run
     glcm = skif.greycomatrix(image, distances=distances, angles=angles,symmetric=True,normed=True)
     feats = np.hstack([skif.greycoprops(glcm, prop).ravel() for prop in properties])
     testGLCMFeats.append(feats)
@@ -181,8 +184,16 @@ testGLCMFeats = scaler.transform(testGLCMFeats)
 ## confusion matrix
 ## get predictions for all 624 test samples      
 GLCMPredictions = GLCM_SVC.predict(testGLCMFeats)
-confusion_matrix(testLabels, GLCMPredictions)
+
+finalData = {'Predicted':GLCMPredictions, 'Truth':testLabels}
+finalDF = pd.DataFrame(finalData, columns=['Predicted', 'Truth'])
+conMat = pd.crosstab(finalDF['Predicted'], finalDF['Truth'], rownames=['Predicted'], colnames=['Truth'])
+print(conMat)
+#skmetrics.confusion_matrix(testLabels, GLCMPredictions)
 ## can do further metrics, like accuracy, ROC, etc. 
+print("accuracy: ", skmetrics.accuracy_score(testLabels, GLCMPredictions))
+print("precision: ", skmetrics.precision_score(testLabels, GLCMPredictions))
+print("recall: ", skmetrics.recall_score(testLabels, GLCMPredictions))
 
 ## show an example of the equalization before-after
 # cv2.imshow("local equalize", trainResizedEqualizedImages[2110])
