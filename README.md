@@ -7,4 +7,7 @@ The feature extraction methods used were
 3.Local Binary Pattern Histograms (LBP)
 For these feature extraction methods, we cross-validated SVM models to find hyperparameters that gave the best mean score to conduct training and testing using the feature extraction methods.
 For each feature extraction method, the confusion matrix, accuracy, precision and recall were computed and compared to determine the differences between them in terms of their classification performance. 
-T
+
+Dataset for this project can be downloaded from here:
+
+https://www.kaggle.com/paultimothymooney/chest-xray-pneumonia
